@@ -438,7 +438,7 @@ function layout(B){
   }
   function draw(){
     head();renderTeams();renderDns();
-    var show=!!S.drawn;
+    var show=true;
     $('nodraw').style.display=show?'none':'block';
     $('brwrap').style.display=show?'block':'none';
     if(show){render(S);fit()}
@@ -450,7 +450,7 @@ function layout(B){
     $('secB').style.display=t=='b'?'block':'none';
     $('secG').style.display=t=='g'?'block':'none';
     $('tabT').classList.toggle('on',t=='t');$('tabB').classList.toggle('on',t=='b');$('tabG').classList.toggle('on',t=='g');
-    if(t=='b'&&S.drawn)fit();
+    if(t=="b")fit();
     if(location.hash!=HASH[t])history.replaceState(null,'',HASH[t]);
   }
   $('tabT').onclick=function(){setTab('t')};$('tabB').onclick=function(){setTab('b')};$('tabG').onclick=function(){setTab('g')};
@@ -477,7 +477,7 @@ function layout(B){
   $('q').oninput=renderTeams;
   $('sN').onclick=function(){sortMode='n';$('sN').classList.add('on');$('sX').classList.remove('on');renderTeams()};
   $('sX').onclick=function(){sortMode='x';$('sX').classList.add('on');$('sN').classList.remove('on');renderTeams()};
-  window.addEventListener('resize',function(){if(tab=='b'&&S.drawn)fit()});
+  window.addEventListener('resize',function(){if(tab=="b")fit()});
 
   /* листья */
   (function(){var h='',em=['🍁','🍂','🍁'];for(var i=0;i<12;i++)
