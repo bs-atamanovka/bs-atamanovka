@@ -202,6 +202,14 @@ footer{text-align:center;margin-top:34px;color:#b9abf0;font-size:15px}
 </div>
 
 <script>
+/* ============================================================
+   ВКЛЮЧАТЕЛЬ СЕТКИ — меняйте один символ:
+     var BRACKET_ON = 1;   → сетка ВКЛЮЧЕНА (вкладка «Сетка» видна)
+     var BRACKET_ON = 0;   → сетка ВЫКЛЮЧЕНА (вкладка скрыта)
+   ============================================================ */
+var BRACKET_ON = 1;
+
+
 /* ===== общая логика сетки (одинакова в оверлее, панели и сцене составов) ===== */
 var BS_KEY='bsBracket.v1', BS_CH='bsBracket';
 function bsBlankTeam(i){var p=[];for(var k=0;k<5;k++)p.push({f:'',l:'',xp:''});return {name:'Команда '+(i+1),players:p}}
@@ -438,7 +446,7 @@ function layout(B){
   }
   function draw(){
     head();renderTeams();renderDns();
-    var show=true;
+    var show=(BRACKET_ON==1);$('tabB').hidden=!show;if(!show&&tab=='b')setTab('t');
     $('nodraw').style.display=show?'none':'block';
     $('brwrap').style.display=show?'block':'none';
     if(show){render(S);fit()}
