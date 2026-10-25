@@ -57,6 +57,20 @@ header{text-align:center;padding:10px 0 6px}
 .tc .p .nm{flex:1;min-width:0;overflow-wrap:anywhere;text-shadow:0 2px 0 var(--ink)}
 .tc .p .xp{color:#ffd447;font-size:.85em;white-space:nowrap}
 .tc .p.e .nm{opacity:.4;font-style:italic}
+.r[data-ti]{cursor:pointer}.r[data-ti]:hover{filter:brightness(1.18)}
+#mdl{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(10,4,40,.72)}
+#mdl.on{display:flex}
+#mdl .box{width:min(420px,100%);border:5px solid var(--ink);border-radius:16px;overflow:hidden;background:#1e0f5c;box-shadow:0 8px 0 var(--ink)}
+#mdl .hd{display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(180deg,#5a2fd0,#3a1d9a);border-bottom:5px solid var(--ink)}
+#mdl .hd b{flex:1;font-weight:400;font-size:26px;text-shadow:0 3px 0 var(--ink)}
+#mdl .x{font-family:var(--font);font-size:18px;border:3px solid var(--ink);border-radius:8px;padding:2px 10px;cursor:pointer;background:var(--y);color:var(--ink)}
+#mdl .p{display:flex;align-items:center;gap:10px;padding:12px 16px;font-size:22px;border-top:3px solid rgba(13,6,48,.7)}
+#mdl .p:first-of-type{border-top:0}
+#mdl .dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--ink);flex:none}
+#mdl .nm{flex:1;min-width:0;overflow-wrap:anywhere;text-shadow:0 2px 0 var(--ink)}
+#mdl .xp{color:#ffd447;font-size:.85em;white-space:nowrap}
+#mdl .p.e .nm{opacity:.4;font-style:italic}
+#mdl .sum{padding:10px 16px;border-top:3px solid rgba(13,6,48,.7);background:rgba(13,6,48,.35);color:#d6ccff;font-size:17px}
 .none{grid-column:1/-1;text-align:center;padding:40px;font-size:22px;color:#d6ccff}
 
 #brwrap{overflow-x:auto;overflow-y:hidden;border-radius:16px;background:rgba(13,6,48,.35);border:4px solid var(--ink)}
@@ -198,9 +212,10 @@ footer{text-align:center;margin-top:34px;color:#b9abf0;font-size:15px}
     <div class="warn">Это сторонние (неофициальные) DNS-серверы, к Supercell они отношения не имеют. Меняйте DNS только на своём устройстве, не вводите на посторонних страницах пароли и данные карты. После смены DNS откройте любой сайт в браузере: если интернет пропал, верните «Автоматически» и напишите организаторам.</div>
   </section>
 
-  <footer>Данные обновляются организаторами · очки опыта (★) определяют расстановку в сетке</footer>
+  <footer>Данные обновляются организаторами · очки опыта (★) определяют расстановку в сетке · версия страницы: v5 (клик по команде в сетке)</footer>
 </div>
 
+<div id="mdl"><div class="box"><div class="hd"><b id="mdlT"></b><button class="x" id="mdlX">✕</button></div><div id="mdlB"></div></div></div>
 <script>
 /* ============================================================
    ВКЛЮЧАТЕЛЬ СЕТКИ — меняйте один символ:
@@ -414,7 +429,7 @@ function layout(B){
         var sc=(o.res&&o.res.s&&sl.known&&o.res.s[i]!==''&&o.res.s[i]!=null)?'<span class="sc">'+esc(o.res.s[i])+'</span>':'';
         var dot=(sl.known&&!sl.bye)?'<span class="dot" style="background:hsl('+bsHue(sl.name)+',75%,58%)"></span>':'<span class="dot"></span>';
         var xp=(sl.known&&sl.xp&&N<16)?'<span class="xp">★'+bsFmt(sl.xp)+'</span>':'';
-        rows+='<div class="'+cls+'">'+dot+'<span class="nm">'+esc(sl.known?sl.name:sl.label)+'</span>'+xp+sc+'</div>';
+        rows+='<div class="'+cls+'"'+(sl.known&&!sl.bye?' data-ti="'+sl.ti+'"':'')+'>'+dot+'<span class="nm">'+esc(sl.known?sl.name:sl.label)+'</span>'+xp+sc+'</div>';
       }
       html+='<div class="m'+(m.sec=='G'?' gf':'')+'" style="left:'+p.x+'px;top:'+(p.y-Ly.ch/2)+'px;width:'+Ly.cw+'px;height:'+Ly.ch+'px;--fs:'+fs+'px;--nw:'+nw+'px">'
         +'<div class="no">'+m.num+'</div><div class="rows">'+rows+'</div></div>';
@@ -482,6 +497,19 @@ function layout(B){
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(v).then(ok,function(){prompt('Скопируйте:',v)});
     else prompt('Скопируйте:',v);
   });
+  function openTeam(ti){
+    var tm=S.teams[ti],h='',tot=0;
+    for(var k=0;k<S.pc;k++){
+      var p=tm.players[k],nm=pname(p),xp=parseInt(p.xp)||0;tot+=xp;
+      h+='<div class="p'+(nm?'':' e')+'"><span class="dot" style="background:'+(nm?'hsl('+bsHue(nm)+',75%,58%)':'transparent')+'"></span><span class="nm">'+esc(nm||'—')+'</span>'+(xp?'<span class="xp">★ '+bsFmt(xp)+'</span>':'')+'</div>';
+    }
+    h+='<div class="sum">Сумма очков: ★ '+bsFmt(tot)+'</div>';
+    $('mdlT').textContent=bsTName(S,ti);$('mdlB').innerHTML=h;$('mdl').classList.add('on');
+  }
+  $('cards').addEventListener('click',function(e){var r=e.target.closest('.r[data-ti]');if(r)openTeam(+r.dataset.ti)});
+  $('mdlX').onclick=function(){$('mdl').classList.remove('on')};
+  $('mdl').addEventListener('click',function(e){if(e.target===this)this.classList.remove('on')});
+  document.addEventListener('keydown',function(e){if(e.key=='Escape')$('mdl').classList.remove('on')});
   $('q').oninput=renderTeams;
   $('sN').onclick=function(){sortMode='n';$('sN').classList.add('on');$('sX').classList.remove('on');renderTeams()};
   $('sX').onclick=function(){sortMode='x';$('sX').classList.add('on');$('sN').classList.remove('on');renderTeams()};
