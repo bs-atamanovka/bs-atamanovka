@@ -156,6 +156,14 @@ body.admin .r.ed:hover{outline:4px solid #fff;outline-offset:-4px;filter:brightn
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(30px);opacity:0;pointer-events:none;z-index:80;
   background:var(--y);color:var(--ink);border:4px solid var(--ink);border-radius:12px;padding:10px 20px;font-size:18px;box-shadow:0 5px 0 var(--ink);transition:.25s;max-width:92vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* список участников под названием команды */
+.r .tn{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.r .tn .nm{flex:none}
+.r.hp .tn .nm{font-size:calc(var(--fs)*.72);line-height:1}
+.r .pl{margin-top:1px;font-size:max(10px,calc(var(--fs)*.4));line-height:1.05;letter-spacing:-.2px;color:#cdbfff;text-shadow:none;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.r.w .pl{color:#5a2d00}
 </style>
 </head>
 <body>
@@ -447,9 +455,17 @@ function layout(B){
         if(!sl.known||sl.bye)cls+=' ph';
         else if(o.res&&o.res.w)cls+=(o.res.w==i+1)?' w':' l';
         var sc=(o.res&&o.res.s&&sl.known&&o.res.s[i]!==''&&o.res.s[i]!=null)?'<span class="sc">'+esc(o.res.s[i])+'</span>':'';
+        var pl='';
+        if(sl.known&&!sl.bye&&S.teams[sl.ti]){
+          var ns=[];for(var pk=0;pk<S.pc;pk++){var pp=S.teams[sl.ti].players[pk],ppn=pname(pp);
+            if(!ppn)continue;
+            if(!S.initials&&(pp.l||'').trim()){var pf=(pp.f||'').trim();ppn=(pp.l||'').trim()+(pf?' '+pf.charAt(0).toUpperCase()+'.':'')}
+            ns.push(ppn)}
+          if(ns.length){pl='<span class="pl" title="'+esc(ns.join(', '))+'">'+esc(ns.join(', '))+'</span>';cls+=' hp'}
+        }
         var dot=(sl.known&&!sl.bye)?'<span class="dot" style="background:hsl('+bsHue(sl.name)+',75%,58%)"></span>':'<span class="dot"></span>';
         var xp=(sl.known&&sl.xp&&N<16)?'<span class="xp">★'+bsFmt(sl.xp)+'</span>':'';
-        rows+='<div class="'+cls+((o.slots[0].known&&o.slots[1].known&&!o.slots[0].bye&&!o.slots[1].bye)?' ed':'')+'"'+(sl.known&&!sl.bye?' data-ti="'+sl.ti+'"':'')+' data-mid="'+m.id+'" data-side="'+(i+1)+'">'+dot+'<span class="nm">'+esc(sl.known?sl.name:sl.label)+'</span>'+xp+sc+'</div>';
+        rows+='<div class="'+cls+((o.slots[0].known&&o.slots[1].known&&!o.slots[0].bye&&!o.slots[1].bye)?' ed':'')+'"'+(sl.known&&!sl.bye?' data-ti="'+sl.ti+'"':'')+' data-mid="'+m.id+'" data-side="'+(i+1)+'">'+dot+'<div class="tn"><span class="nm">'+esc(sl.known?sl.name:sl.label)+'</span>'+pl+'</div>'+xp+sc+'</div>';
       }
       html+='<div class="m'+(m.sec=='G'?' gf':'')+'" style="left:'+p.x+'px;top:'+(p.y-Ly.ch/2)+'px;width:'+Ly.cw+'px;height:'+Ly.ch+'px;--fs:'+fs+'px;--nw:'+nw+'px">'
         +'<div class="no">'+m.num+'</div><div class="rows">'+rows+'</div></div>';
