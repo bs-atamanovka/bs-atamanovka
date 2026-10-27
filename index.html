@@ -142,6 +142,20 @@ footer{text-align:center;margin-top:34px;color:#b9abf0;font-size:15px}
 .drift{position:fixed;top:-40px;pointer-events:none;animation:fall linear infinite;opacity:.8;z-index:0}
 @keyframes fall{0%{transform:translate(0,-40px) rotate(0)}100%{transform:translate(160px,115vh) rotate(420deg)}}
 @media (prefers-reduced-motion:reduce){.drift{display:none}}
+
+/* ===== режим организатора ===== */
+#adm{display:none;margin:0 auto 12px;max-width:1100px;padding:10px 14px;border:4px solid var(--ink);border-radius:14px;
+  background:linear-gradient(180deg,#5a2fd0,#3a1d9a);box-shadow:0 5px 0 var(--ink);align-items:center;gap:8px;flex-wrap:wrap;font-size:16px}
+body.admin #adm{display:flex}
+#adm b{font-weight:400;font-size:20px;color:var(--y);text-shadow:0 2px 0 var(--ink)}
+#adm span{flex:1 1 260px;color:#e6deff;line-height:1.25}
+#adm button{font-family:var(--font);font-size:15px;border:3px solid var(--ink);border-radius:9px;padding:5px 12px;cursor:pointer;background:var(--y);color:var(--ink);box-shadow:0 3px 0 var(--ink)}
+#adm button.d{background:#ff6b6b}
+body.admin .r.ed{cursor:pointer}
+body.admin .r.ed:hover{outline:4px solid #fff;outline-offset:-4px;filter:brightness(1.15)}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(30px);opacity:0;pointer-events:none;z-index:80;
+  background:var(--y);color:var(--ink);border:4px solid var(--ink);border-radius:12px;padding:10px 20px;font-size:18px;box-shadow:0 5px 0 var(--ink);transition:.25s;max-width:92vw;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
@@ -177,6 +191,8 @@ footer{text-align:center;margin-top:34px;color:#b9abf0;font-size:15px}
 
   <section id="secB" style="display:none">
     <div id="nodraw">Жеребьёвка ещё не проведена. Сетка появится здесь сразу после неё.</div>
+    <div id="adm"><b>🛠 Режим организатора</b><span>Нажмите на команду в карточке матча — она станет победителем. Нажмите ещё раз — результат снимется.</span>
+      <button id="admDl">💾 Скачать data.json</button><button id="admCp">📋 Копировать res</button><button id="admRs" class="d">↺ Сбросить всё</button><button id="admEx">Выйти</button></div>
     <div id="brwrap"><div id="stage"><svg id="lines" width="1920" height="980" viewBox="0 0 1920 980"></svg><div id="cards"></div></div></div>
   </section>
 
@@ -321,7 +337,11 @@ function bsHue(s){var h=0;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%36
 (function(){
   var $=function(id){return document.getElementById(id)};
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-  var S=bsFromRaw({}),sortMode='n',tab='t';
+  var S=bsFromRaw({}),sortMode='n',tab='t',curB=null,curR=null;
+  var ADMIN=false,RES_KEY='bsRes.v1';
+  try{if(/[?&]admin\b/.test(location.search))localStorage.setItem('bsAdmin','1');ADMIN=localStorage.getItem('bsAdmin')=='1'}catch(e){ADMIN=/[?&]admin\b/.test(location.search)}
+  function localRes(){try{var r=JSON.parse(localStorage.getItem(RES_KEY)||'null');return (r&&typeof r=='object')?r:null}catch(e){return null}}
+  function applyLocal(){if(!ADMIN)return;var r=localRes();if(r)S.res=r}
 
   function pname(p){
     var f=(p.f||'').trim(),l=(p.l||'').trim();
@@ -389,7 +409,7 @@ function layout(B){
   }
 
   function render(S){
-    var N=parseInt(S.N)||8,B=bsBuild(N,S.dbl),R=bsResolve(S,B),Ly=layout(B);
+    var N=parseInt(S.N)||8,B=bsBuild(N,S.dbl),R=bsResolve(S,B),Ly=layout(B);curB=B;curR=R;
     var fs=Math.max(15,Math.min(26,Ly.ch*.3)),nw=Math.max(28,Ly.ch*.4);
     var html='',svg='',id;
 
@@ -429,7 +449,7 @@ function layout(B){
         var sc=(o.res&&o.res.s&&sl.known&&o.res.s[i]!==''&&o.res.s[i]!=null)?'<span class="sc">'+esc(o.res.s[i])+'</span>':'';
         var dot=(sl.known&&!sl.bye)?'<span class="dot" style="background:hsl('+bsHue(sl.name)+',75%,58%)"></span>':'<span class="dot"></span>';
         var xp=(sl.known&&sl.xp&&N<16)?'<span class="xp">★'+bsFmt(sl.xp)+'</span>':'';
-        rows+='<div class="'+cls+'"'+(sl.known&&!sl.bye?' data-ti="'+sl.ti+'"':'')+'>'+dot+'<span class="nm">'+esc(sl.known?sl.name:sl.label)+'</span>'+xp+sc+'</div>';
+        rows+='<div class="'+cls+((o.slots[0].known&&o.slots[1].known&&!o.slots[0].bye&&!o.slots[1].bye)?' ed':'')+'"'+(sl.known&&!sl.bye?' data-ti="'+sl.ti+'"':'')+' data-mid="'+m.id+'" data-side="'+(i+1)+'">'+dot+'<span class="nm">'+esc(sl.known?sl.name:sl.label)+'</span>'+xp+sc+'</div>';
       }
       html+='<div class="m'+(m.sec=='G'?' gf':'')+'" style="left:'+p.x+'px;top:'+(p.y-Ly.ch/2)+'px;width:'+Ly.cw+'px;height:'+Ly.ch+'px;--fs:'+fs+'px;--nw:'+nw+'px">'
         +'<div class="no">'+m.num+'</div><div class="rows">'+rows+'</div></div>';
@@ -506,7 +526,42 @@ function layout(B){
     h+='<div class="sum">Сумма очков: ★ '+bsFmt(tot)+'</div>';
     $('mdlT').textContent=bsTName(S,ti);$('mdlB').innerHTML=h;$('mdl').classList.add('on');
   }
-  $('cards').addEventListener('click',function(e){var r=e.target.closest('.r[data-ti]');if(r)openTeam(+r.dataset.ti)});
+  $('cards').addEventListener('click',function(e){
+    if(ADMIN){var a=e.target.closest('.r[data-mid]');if(a)setWin(+a.dataset.mid,+a.dataset.side);return}
+    var r=e.target.closest('.r[data-ti]');if(r)openTeam(+r.dataset.ti)});
+
+  /* ---------- режим организатора ---------- */
+  var tmr=null;
+  function toast(t){var el=$('toast');el.textContent=t;el.classList.add('on');clearTimeout(tmr);tmr=setTimeout(function(){el.classList.remove('on')},2200)}
+  function saveRes(){try{localStorage.setItem(RES_KEY,JSON.stringify(S.res))}catch(e){}}
+  function clearDown(mid){curB.M.forEach(function(m2){
+    if(m2.src.some(function(s){return s.m===mid})&&S.res[m2.id]){delete S.res[m2.id];clearDown(m2.id)}})}
+  function setWin(mid,side){
+    var o=curR&&curR[mid];if(!o)return;
+    var a=o.slots[0],b=o.slots[1];
+    if(!a.known||!b.known){toast('Сначала определите обе команды этого матча');return}
+    if(a.bye||b.bye){toast('Соперника нет — команда проходит дальше сама');return}
+    var cur=S.res[mid]&&S.res[mid].w,nm=o.slots[side-1].name;
+    if(cur==side){delete S.res[mid];toast('М'+o.m.num+': результат снят')}
+    else{S.res[mid]={w:side,s:['','']};toast('М'+o.m.num+': победила «'+nm+'»')}
+    clearDown(mid);saveRes();draw();
+  }
+  function ctext(v,okmsg){
+    function ok(){toast(okmsg)}
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(v).then(ok,function(){prompt('Скопируйте:',v)});
+    else prompt('Скопируйте:',v);
+  }
+  if(ADMIN){
+    document.body.classList.add('admin');
+    var tt=document.createElement('div');tt.id='toast';document.body.appendChild(tt);
+    $('admDl').onclick=function(){
+      var blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'}),a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);a.download='data.json';document.body.appendChild(a);a.click();a.remove();toast('data.json скачан — положите его рядом с index.html');
+    };
+    $('admCp').onclick=function(){ctext(JSON.stringify(S.res),'Скопировано: поле res')};
+    $('admRs').onclick=function(){if(confirm('Сбросить ВСЕ результаты матчей?')){S.res={};saveRes();draw();toast('Все результаты сброшены')}};
+    $('admEx').onclick=function(){try{localStorage.removeItem('bsAdmin')}catch(e){}location.href=location.pathname+location.hash};
+  }
   $('mdlX').onclick=function(){$('mdl').classList.remove('on')};
   $('mdl').addEventListener('click',function(e){if(e.target===this)this.classList.remove('on')});
   document.addEventListener('keydown',function(e){if(e.key=='Escape')$('mdl').classList.remove('on')});
@@ -526,10 +581,10 @@ function layout(B){
     if(location.protocol=='file:')return;
     fetch('data.json?'+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():null}).then(function(t){
       if(!t||t===lastJ)return;lastJ=t;
-      try{S=bsFromRaw(JSON.parse(t));draw()}catch(e){}
+      try{S=bsFromRaw(JSON.parse(t));applyLocal();draw()}catch(e){}
     }).catch(function(){});
   }
-  draw();
+  applyLocal();draw();
   if(location.hash=='#setka')setTab('b');else if(location.hash=='#dns')setTab('g');
   pull();setInterval(pull,60000);
 })();
